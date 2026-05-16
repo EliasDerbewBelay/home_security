@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-white;
+  }
+}
+
+.glass-card {
+  background-color: rgba(15, 23, 42, 0.8);
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+}
+
+.neon-shadow-blue {
+  shadow-color: #00E5FF;
+  shadow-offset: 0px 0px;
+  shadow-opacity: 0.6;
+  shadow-radius: 15px;
+  elevation: 15;
+}
+
+.neon-shadow-red {
+  shadow-color: #FF1744;
+  shadow-offset: 0px 0px;
+  shadow-opacity: 0.8;
+  shadow-radius: 25px;
+  elevation: 25;
+}
+
+.neon-shadow-green {
+  shadow-color: #00E676;
+  shadow-offset: 0px 0px;
+  shadow-opacity: 0.7;
+  shadow-radius: 20px;
+  elevation: 20;
+}
