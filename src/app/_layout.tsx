@@ -1,3 +1,4 @@
+import 'react-native-url-polyfill/auto';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -5,6 +6,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { View, ActivityIndicator } from 'react-native';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useHardware } from '@/hooks/useHardware';
@@ -57,23 +59,34 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading, restoreSession } = useAuthStore();
   useHardware();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    restoreSession();
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
       router.replace('/login');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isLoading]);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#00E5FF" />
+      </View>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
       <PaperProvider theme={MD3DarkTheme}>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <Stack>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="login" options={{ headerShown: false }} />
-            <Stack.Screen name="register" options={{ headerShown: false }} />
             <Stack.Screen name="contacts" options={{ headerShown: false }} />
             <Stack.Screen name="history" options={{ title: 'Activity Log', headerStyle: { backgroundColor: '#0F172A' }, headerTintColor: '#fff' }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal' }} />

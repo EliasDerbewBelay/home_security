@@ -1,9 +1,13 @@
 import React from 'react';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { View } from 'react-native';
+import { useAuthStore } from '@/store/authStore';
 
 export default function TabLayout() {
+  const { isAuthenticated } = useAuthStore();
+  if (!isAuthenticated) return <Redirect href="/login" />;
+
   return (
     <Tabs
       screenOptions={{

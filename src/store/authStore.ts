@@ -1,45 +1,78 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
-import * as SecureStore from 'expo-secure-store';
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { authService } from '@/services/auth/authService'
+import type { AuthState, LoginFormData, RegisterFormData } from '@/types/auth'
 
-interface UserProfile {
-  id: string;
-  email: string;
-  name: string;
+interface AuthStore extends AuthState {
+  register: (data: RegisterFormData) => Promise<void>
+  login: (data: LoginFormData) => Promise<void>
+  logout: () => Promise<void>
+  restoreSession: () => Promise<void>
+  clearError: () => void
+  error: string | null
 }
 
-interface AuthState {
-  token: string | null;
-  user: UserProfile | null;
-  isAuthenticated: boolean;
-  isBiometricEnrolled: boolean;
-  setAuth: (token: string, user: UserProfile) => void;
-  logout: () => void;
-  setBiometricEnrolled: (enrolled: boolean) => void;
-}
-
-// Secure storage adapter for Zustand
-const secureStorage: StateStorage = {
-  getItem: (name: string) => SecureStore.getItemAsync(name),
-  setItem: (name: string, value: string) => SecureStore.setItemAsync(name, value),
-  removeItem: (name: string) => SecureStore.deleteItemAsync(name),
-};
-
-export const useAuthStore = create<AuthState>()(
+export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
-      token: null,
       user: null,
+      session: null,
+      isLoading: false,
       isAuthenticated: false,
-      isBiometricEnrolled: false,
+      error: null,
 
-      setAuth: (token, user) => set({ token, user, isAuthenticated: true }),
-      logout: () => set({ token: null, user: null, isAuthenticated: false }),
-      setBiometricEnrolled: (isBiometricEnrolled) => set({ isBiometricEnrolled }),
+      register: async (data) => {
+        set({ isLoading: true, error: null })
+        try {
+          const user = await authService.register(data)
+          set({ user, isAuthenticated: true, isLoading: false })
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'An unknown error occurred'
+          set({ error: message, isLoading: false })
+          throw err
+        }
+      },
+
+      login: async (data) => {
+        set({ isLoading: true, error: null })
+        try {
+          const user = await authService.login(data)
+          set({ user, isAuthenticated: true, isLoading: false })
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'An unknown error occurred'
+          set({ error: message, isLoading: false })
+          throw err
+        }
+      },
+
+      logout: async () => {
+        set({ isLoading: true })
+        try {
+          await authService.logout()
+          set({ user: null, session: null, isAuthenticated: false, isLoading: false })
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'An unknown error occurred'
+          set({ error: message, isLoading: false })
+        }
+      },
+
+      restoreSession: async () => {
+        set({ isLoading: true })
+        try {
+          const user = await authService.getCurrentUser()
+          set({ user, isAuthenticated: !!user, isLoading: false })
+        } catch {
+          set({ isAuthenticated: false, isLoading: false })
+        }
+      },
+
+      clearError: () => set({ error: null }),
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => secureStorage),
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
     }
   )
-);
+)
