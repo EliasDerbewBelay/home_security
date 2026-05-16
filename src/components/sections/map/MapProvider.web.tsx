@@ -56,6 +56,12 @@ const styles = StyleSheet.create({
   gridContainer: {
     ...StyleSheet.absoluteFillObject,
     opacity: 0.3,
+    transform: [
+      { perspective: 1200 }, 
+      { rotateX: '60deg' }, 
+      { rotateZ: '-10deg' }, 
+      { scale: 1.8 }
+    ],
   },
   gridLineH: {
     height: 1,
@@ -89,9 +95,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: '50%',
     top: '50%',
-    marginLeft: -40,
-    marginTop: -50,
+    marginLeft: -60, // Half of 120
+    marginTop: -60, // Half of 120
+    width: 120,
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 50,
+    overflow: 'visible',
   }
 });
 

@@ -9,6 +9,9 @@ import { useDeviceStore } from '@/store/deviceStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { hardwareService } from '@/services/hardware/hardwareService';
+import { SecurityFloatingMenu } from '@/components/ui/SecurityFloatingMenu';
+import { showComingSoon } from '@/utils/feedback';
+import { router } from 'expo-router';
 
 export default function DashboardScreen() {
   const { latestUltrasonic, latestForce } = useSensorStore();
@@ -26,7 +29,10 @@ export default function DashboardScreen() {
       <ScrollView className="flex-1 px-4 pt-12 pb-24">
         {/* Header */}
         <View className="flex-row justify-between items-center mb-8">
-          <View className="flex-row items-center">
+          <TouchableOpacity 
+            onPress={() => showComingSoon('User Profile')}
+            className="flex-row items-center"
+          >
             <View className="w-10 h-10 rounded-full bg-white/10 items-center justify-center border border-white/20 overflow-hidden">
                <FontAwesome5 name="user" size={18} color="white" />
             </View>
@@ -34,8 +40,11 @@ export default function DashboardScreen() {
               <Text className="text-white/40 text-xs font-bold uppercase tracking-widest">Welcome back</Text>
               <Text className="text-white text-xl font-bold">Good evening, Shepard</Text>
             </View>
-          </View>
-          <TouchableOpacity className="w-10 h-10 items-center justify-center relative">
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => showComingSoon('Notifications')}
+            className="w-10 h-10 items-center justify-center relative"
+          >
             <FontAwesome5 name="bell" size={20} color="#00E676" />
             <View className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full border border-background" />
           </TouchableOpacity>
@@ -81,9 +90,15 @@ export default function DashboardScreen() {
 
         {/* KPI Row */}
         <View className="flex-row space-x-3 mb-8">
-          <MetricCard label="Alerts" value={0} className="mr-2" />
-          <MetricCard label="Sensors" value={12} className="mx-1" />
-          <MetricCard label="Uptime" value="99.9%" isGreen className="ml-2" />
+          <TouchableOpacity className="flex-1" onPress={() => router.push('/history')}>
+            <MetricCard label="Alerts" value={0} />
+          </TouchableOpacity>
+          <TouchableOpacity className="flex-1" onPress={() => router.push('/sensors')}>
+            <MetricCard label="Sensors" value={12} />
+          </TouchableOpacity>
+          <TouchableOpacity className="flex-1" onPress={() => showComingSoon('System Uptime Details')}>
+            <MetricCard label="Uptime" value="99.9%" isGreen />
+          </TouchableOpacity>
         </View>
 
         {/* Live Sensors */}
@@ -113,14 +128,11 @@ export default function DashboardScreen() {
         </View>
       </ScrollView>
 
-      {/* Floating Action Button */}
-      <TouchableOpacity 
-        className="absolute bottom-28 right-6 w-16 h-16 bg-secondary rounded-full items-center justify-center neon-shadow-green shadow-lg"
-        onPress={() => hardwareService.sendCommand({ action: 'trigger_siren' })}
-      >
-        <FontAwesome5 name="shield-alt" size={24} color="#0F172A" />
-      </TouchableOpacity>
+      {/* Animated Security Menu */}
+      <SecurityFloatingMenu />
     </View>
   );
 }
+
+
 

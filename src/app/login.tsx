@@ -72,7 +72,9 @@ export default function LoginScreen() {
 
       <View className="flex-row justify-center mt-8">
         <Text className="text-white/40">Don't have an account? </Text>
-        <Text className="text-primary font-bold">Register</Text>
+        <TouchableOpacity onPress={() => router.push('/register')}>
+          <Text className="text-primary font-bold">Register</Text>
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
