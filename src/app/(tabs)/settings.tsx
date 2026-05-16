@@ -5,6 +5,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { router } from 'expo-router';
 import { showComingSoon } from '@/utils/feedback';
 import { CyberSlider } from '@/components/ui/CyberSlider';
+import { useAuthStore } from '@/store/authStore';
 
 export default function SettingsScreen() {
   const [emergencyAlerts, setEmergencyAlerts] = useState(true);
@@ -13,6 +14,7 @@ export default function SettingsScreen() {
   const [protocol, setProtocol] = useState('HTTP');
   const [ultrasonicThreshold, setUltrasonicThreshold] = useState(45);
   const [forceSensitivity, setForceSensitivity] = useState(0.85);
+  const { user, logout } = useAuthStore();
 
   const SectionHeader = ({ title }: { title: string }) => (
     <Text className="text-white/40 text-[10px] font-bold tracking-[4px] uppercase px-6 mb-3 mt-8">
@@ -189,8 +191,8 @@ export default function SettingsScreen() {
                   <FontAwesome5 name="user" size={16} color="#00E5FF" />
                 </View>
                 <View>
-                  <Text className="text-white font-bold">Admin User</Text>
-                  <Text className="text-white/40 text-xs">admin@shieldnet.local</Text>
+                  <Text className="text-white font-bold">{user?.fullName || 'Admin User'}</Text>
+                  <Text className="text-white/40 text-xs">{user?.email || 'admin@shieldnet.local'}</Text>
                 </View>
               </View>
               <FontAwesome5 name="chevron-right" size={14} color="rgba(255,255,255,0.2)" />
@@ -210,7 +212,10 @@ export default function SettingsScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity 
-              onPress={() => router.replace('/login')}
+              onPress={() => {
+                logout();
+                router.replace('/login');
+              }}
               className="p-5 flex-row items-center"
             >
               <View className="w-10 h-10 bg-danger/10 rounded-full items-center justify-center mr-4 border border-danger/20">

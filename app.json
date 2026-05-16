@@ -19,11 +19,15 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0F172A"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.home_security"
+      "package": "com.anonymous.home_security",
+      "navigationBar": {
+        "backgroundColor": "#0F172A",
+        "barStyle": "light-content"
+      }
     },
     "web": {
       "bundler": "metro",

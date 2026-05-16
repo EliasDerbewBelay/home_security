@@ -12,11 +12,13 @@ import { hardwareService } from '@/services/hardware/hardwareService';
 import { SecurityFloatingMenu } from '@/components/ui/SecurityFloatingMenu';
 import { showComingSoon } from '@/utils/feedback';
 import { router } from 'expo-router';
+import { useAuthStore } from '@/store/authStore';
 
 export default function DashboardScreen() {
   const { latestUltrasonic, latestForce } = useSensorStore();
-  const { status, setArmed } = useDeviceStore();
+   const { status, setArmed } = useDeviceStore();
   const { mockMode } = useSettingsStore();
+  const { user } = useAuthStore();
 
   const toggleArmed = () => {
     const newArmedState = !status.armed;
@@ -38,7 +40,7 @@ export default function DashboardScreen() {
             </View>
             <View className="ml-4">
               <Text className="text-white/40 text-xs font-bold uppercase tracking-widest">Welcome back</Text>
-              <Text className="text-white text-xl font-bold">Good evening, Shepard</Text>
+              <Text className="text-white text-xl font-bold">Good evening, {user?.fullName.split(' ')[0] || 'Agent'}</Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity 

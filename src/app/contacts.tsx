@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { router } from 'expo-router';
@@ -124,67 +124,72 @@ export default function EmergencyContactsScreen() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <GlassCard style={styles.modalContent} className="p-8 border border-white/10">
-            <View className="flex-row justify-between items-center mb-8">
-              <Text className="text-white text-2xl font-bold">Add Contact</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <FontAwesome5 name="times" size={20} color="rgba(255,255,255,0.4)" />
-              </TouchableOpacity>
-            </View>
-
-            <View className="mb-6">
-              <Text className="text-white/40 text-xs font-bold uppercase mb-3">Name</Text>
-              <TextInput
-                placeholder="Contact name"
-                placeholderTextColor="rgba(255,255,255,0.2)"
-                value={newContact.name}
-                onChangeText={(text) => setNewContact({...newContact, name: text})}
-                className="bg-black/40 border border-white/10 rounded-2xl p-4 text-white font-medium"
-              />
-            </View>
-
-            <View className="mb-8">
-              <Text className="text-white/40 text-xs font-bold uppercase mb-3">Phone</Text>
-              <TextInput
-                placeholder="+1 (555) 000-0000"
-                placeholderTextColor="rgba(255,255,255,0.2)"
-                value={newContact.phone}
-                onChangeText={(text) => setNewContact({...newContact, phone: text})}
-                keyboardType="phone-pad"
-                className="bg-black/40 border border-white/10 rounded-2xl p-4 text-white font-medium"
-              />
-            </View>
-
-            <View className="mb-10">
-              <Text className="text-white/40 text-xs font-bold uppercase mb-3">Type</Text>
-              <View className="flex-row space-x-4">
-                <TouchableOpacity 
-                  onPress={() => setNewContact({...newContact, type: 'POLICE'})}
-                  className={`flex-1 py-4 rounded-2xl items-center border ${newContact.type === 'POLICE' ? 'bg-[#FF1744]/20 border-[#FF1744]' : 'bg-white/5 border-white/10'}`}
-                >
-                  <Text className={`font-bold ${newContact.type === 'POLICE' ? 'text-white' : 'text-white/40'}`}>POLICE</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  onPress={() => setNewContact({...newContact, type: 'PERSONAL'})}
-                  className={`flex-1 py-4 rounded-2xl items-center border ${newContact.type === 'PERSONAL' ? 'bg-[#00E5FF] border-[#00E5FF]' : 'bg-white/5 border-white/10'} ml-4`}
-                >
-                  <Text className={`font-bold ${newContact.type === 'PERSONAL' ? 'text-background' : 'text-white/40'}`}>PERSONAL</Text>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            className="w-full"
+          >
+            <GlassCard style={styles.modalContent} className="p-8 border border-white/10">
+              <View className="flex-row justify-between items-center mb-8">
+                <Text className="text-white text-2xl font-bold">Add Contact</Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <FontAwesome5 name="times" size={20} color="rgba(255,255,255,0.4)" />
                 </TouchableOpacity>
               </View>
-            </View>
 
-            <View className="flex-row justify-between items-center">
-              <TouchableOpacity onPress={() => setModalVisible(false)} className="px-6">
-                <Text className="text-white/40 font-bold text-lg">Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={handleAddContact}
-                className="bg-secondary px-10 py-5 rounded-3xl neon-shadow-green"
-              >
-                <Text className="text-background font-bold text-lg">Add Contact</Text>
-              </TouchableOpacity>
-            </View>
-          </GlassCard>
+              <View className="mb-6">
+                <Text className="text-white/40 text-xs font-bold uppercase mb-3">Name</Text>
+                <TextInput
+                  placeholder="Contact name"
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  value={newContact.name}
+                  onChangeText={(text) => setNewContact({...newContact, name: text})}
+                  className="bg-black/40 border border-white/10 rounded-2xl p-4 text-white font-medium"
+                />
+              </View>
+
+              <View className="mb-8">
+                <Text className="text-white/40 text-xs font-bold uppercase mb-3">Phone</Text>
+                <TextInput
+                  placeholder="+1 (555) 000-0000"
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  value={newContact.phone}
+                  onChangeText={(text) => setNewContact({...newContact, phone: text})}
+                  keyboardType="phone-pad"
+                  className="bg-black/40 border border-white/10 rounded-2xl p-4 text-white font-medium"
+                />
+              </View>
+
+              <View className="mb-10">
+                <Text className="text-white/40 text-xs font-bold uppercase mb-3">Type</Text>
+                <View className="flex-row space-x-4">
+                  <TouchableOpacity 
+                    onPress={() => setNewContact({...newContact, type: 'POLICE'})}
+                    className={`flex-1 py-4 rounded-2xl items-center border ${newContact.type === 'POLICE' ? 'bg-[#FF1744]/20 border-[#FF1744]' : 'bg-white/5 border-white/10'}`}
+                  >
+                    <Text className={`font-bold ${newContact.type === 'POLICE' ? 'text-white' : 'text-white/40'}`}>POLICE</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => setNewContact({...newContact, type: 'PERSONAL'})}
+                    className={`flex-1 py-4 rounded-2xl items-center border ${newContact.type === 'PERSONAL' ? 'bg-[#00E5FF] border-[#00E5FF]' : 'bg-white/5 border-white/10'} ml-4`}
+                  >
+                    <Text className={`font-bold ${newContact.type === 'PERSONAL' ? 'text-background' : 'text-white/40'}`}>PERSONAL</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View className="flex-row justify-between items-center">
+                <TouchableOpacity onPress={() => setModalVisible(false)} className="px-6">
+                  <Text className="text-white/40 font-bold text-lg">Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={handleAddContact}
+                  className="bg-secondary px-10 py-5 rounded-3xl neon-shadow-green"
+                >
+                  <Text className="text-background font-bold text-lg">Add Contact</Text>
+                </TouchableOpacity>
+              </View>
+            </GlassCard>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 

@@ -12,6 +12,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        sceneContainerStyle: { backgroundColor: '#0F172A' },
         tabBarStyle: {
           backgroundColor: 'rgba(15, 23, 42, 0.95)',
           borderTopWidth: 0,
@@ -25,6 +26,8 @@ export default function TabLayout() {
           paddingTop: 10,
           elevation: 0,
           shadowOpacity: 0,
+          borderWidth: 1,
+          borderColor: 'rgba(255, 255, 255, 0.05)',
         },
         tabBarActiveTintColor: '#00E676',
         tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.3)',
