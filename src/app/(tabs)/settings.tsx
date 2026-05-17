@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, Switch, Modal, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { router } from 'expo-router';
@@ -16,7 +16,17 @@ export default function SettingsScreen() {
   const [protocol, setProtocol] = useState('HTTP');
   const [ultrasonicThreshold, setUltrasonicThreshold] = useState(45);
   const [forceSensitivity, setForceSensitivity] = useState(0.85);
-  const { user, logout } = useAuthStore();
+  
+  const { logout } = useAuthStore();
+  const [currentUser, setCurrentUser] = useState(auth.currentUser);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+    });
+    return unsubscribe;
+  }, []);
 
   const SectionHeader = ({ title }: { title: string }) => (
     <Text className="text-white/40 text-[10px] font-bold tracking-[4px] uppercase px-6 mb-3 mt-8">
@@ -29,7 +39,7 @@ export default function SettingsScreen() {
       {/* Header */}
       <View className="px-6 pt-16 pb-6 bg-[#0F172A] flex-row items-center justify-between border-b border-white/5">
         <TouchableOpacity 
-          onPress={() => showComingSoon('User Account')}
+          onPress={() => setProfileModalVisible(true)}
           className="flex-row items-center"
         >
           <View className="w-12 h-12 rounded-full border-2 border-secondary overflow-hidden mr-4 neon-shadow-green">
@@ -185,7 +195,7 @@ export default function SettingsScreen() {
         <View className="px-4">
           <GlassCard className="p-0 overflow-hidden">
             <TouchableOpacity 
-              onPress={() => showComingSoon('User Profiles')}
+              onPress={() => setProfileModalVisible(true)}
               className="p-5 flex-row items-center justify-between border-b border-white/5"
             >
               <View className="flex-row items-center">
@@ -193,8 +203,8 @@ export default function SettingsScreen() {
                   <FontAwesome5 name="user" size={16} color="#00E5FF" />
                 </View>
                 <View>
-                  <Text className="text-white font-bold">{user?.fullName || 'Admin User'}</Text>
-                  <Text className="text-white/40 text-xs">{user?.email || 'admin@shieldnet.local'}</Text>
+                  <Text className="text-white font-bold">{currentUser?.displayName || 'Admin User'}</Text>
+                  <Text className="text-white/40 text-xs">{currentUser?.email || 'admin@shieldnet.local'}</Text>
                 </View>
               </View>
               <FontAwesome5 name="chevron-right" size={14} color="rgba(255,255,255,0.2)" />
@@ -233,6 +243,90 @@ export default function SettingsScreen() {
           </GlassCard>
         </View>
       </ScrollView>
+
+      {/* 2. Bespoke Dynamic Profile Details Card Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={profileModalVisible}
+        onRequestClose={() => setProfileModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <GlassCard style={styles.modalContent} className="p-8 border border-white/10">
+            {/* Terminal Top Accent */}
+            <View className="flex-row items-center justify-between mb-8 border-b border-white/5 pb-4">
+              <View className="flex-row items-center">
+                <View className="w-2.5 h-2.5 rounded-full bg-[#00E5FF] mr-2 neon-shadow-blue" />
+                <Text className="text-white/40 font-mono text-[10px] tracking-[2px] uppercase">Profile Decrypt</Text>
+              </View>
+              <TouchableOpacity onPress={() => setProfileModalVisible(false)}>
+                <FontAwesome5 name="times" size={18} color="rgba(255,255,255,0.4)" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Glowing Big Profile Avatar Badge */}
+            <View className="w-24 h-24 rounded-full bg-[#00E5FF]/10 items-center justify-center mb-6 border-2 border-[#00E5FF] self-center neon-shadow-blue">
+              <Text className="text-[#00E5FF] text-4xl font-bold">
+                {currentUser?.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U'}
+              </Text>
+            </View>
+
+            {/* Full Name display */}
+            <Text className="text-white text-2xl font-bold text-center mb-1">{currentUser?.displayName || 'Admin User'}</Text>
+            <Text className="text-[#00E5FF] text-xs font-mono text-center mb-8 uppercase tracking-[3px]">ACTIVE PREMISES GUARD</Text>
+
+            {/* Decrypted Information Table */}
+            <View className="space-y-4 bg-black/30 border border-white/5 rounded-2xl p-5 mb-8">
+              {/* Security ID (UID) */}
+              <View className="border-b border-white/5 pb-3">
+                <Text className="text-white/40 text-[9px] font-bold uppercase tracking-wider mb-1">Security Node ID (UID)</Text>
+                <Text className="text-white font-mono text-xs select-all">{currentUser?.uid || 'MOCK_UID_LOCAL'}</Text>
+              </View>
+
+              {/* Registered Email */}
+              <View className="border-b border-white/5 py-3">
+                <Text className="text-white/40 text-[9px] font-bold uppercase tracking-wider mb-1">Registered Endpoint (Email)</Text>
+                <Text className="text-white font-medium text-sm">{currentUser?.email || 'admin@shieldnet.local'}</Text>
+              </View>
+
+              {/* Account Enrollment Timestamp */}
+              <View className="pt-3">
+                <Text className="text-white/40 text-[9px] font-bold uppercase tracking-wider mb-1">Enrollment Date</Text>
+                <Text className="text-white font-medium text-sm">
+                  {currentUser?.metadata.creationTime ? new Date(currentUser.metadata.creationTime).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) : 'Active Enrolled Node'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Action Buttons */}
+            <TouchableOpacity 
+              onPress={() => setProfileModalVisible(false)}
+              className="bg-[#00E5FF] py-4 rounded-2xl w-full items-center justify-center neon-shadow-blue"
+            >
+              <Text className="text-[#0F172A] font-bold text-base uppercase tracking-[2px]">Close Terminal</Text>
+            </TouchableOpacity>
+          </GlassCard>
+        </View>
+      </Modal>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(2, 6, 23, 0.95)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    borderRadius: 40,
+    backgroundColor: '#0F172A',
+  }
+});
