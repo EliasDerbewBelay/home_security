@@ -1,4 +1,5 @@
 import { SensorEvent, DeviceStatus } from '@/types';
+import { useSettingsStore } from '@/store/settingsStore';
 
 class SimulationEngine {
   private intervalId: any = null;
@@ -46,13 +47,19 @@ class SimulationEngine {
       value = isUltrasonic 
         ? Math.floor(Math.random() * 15 + 5) // Proximity: 5 to 20 cm
         : Math.floor(Math.random() * 800 + 1200); // Force: 1200 to 2000 N
-      triggered = true;
     } else {
       // Safe, standard environmental readings
       value = isUltrasonic 
         ? Math.floor(Math.random() * 250 + 150) // Proximity: 150 to 400 cm
         : Math.floor(Math.random() * 100); // Force: 0 to 100 N
-      triggered = false;
+    }
+
+    // Evaluate triggered state dynamically based on the live user settings thresholds
+    const thresholds = useSettingsStore.getState().sensitivityThresholds;
+    if (isUltrasonic) {
+      triggered = value <= thresholds.ultrasonic;
+    } else {
+      triggered = value >= thresholds.force;
     }
 
     const event: SensorEvent = {

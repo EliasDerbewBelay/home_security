@@ -17,11 +17,11 @@ export default function SettingsScreen() {
     emergencyAlertsEnabled,
     setEmergencyAlertsEnabled,
     sensorAlertsEnabled,
-    setSensorAlertsEnabled
+    setSensorAlertsEnabled,
+    sensitivityThresholds,
+    setThresholds
   } = useSettingsStore();
   const [protocol, setProtocol] = useState('HTTP');
-  const [ultrasonicThreshold, setUltrasonicThreshold] = useState(45);
-  const [forceSensitivity, setForceSensitivity] = useState(0.85);
   
   const { logout } = useAuthStore();
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
@@ -120,20 +120,20 @@ export default function SettingsScreen() {
           <GlassCard className="p-6">
             <CyberSlider 
               label="Ultrasonic Threshold"
-              value={ultrasonicThreshold}
+              value={sensitivityThresholds.ultrasonic}
               min={10}
               max={400}
               unit="cm"
-              onChange={setUltrasonicThreshold}
+              onChange={(val) => setThresholds(Math.round(val), sensitivityThresholds.force)}
             />
 
             <CyberSlider 
-              label="Force Sensitivity"
-              value={forceSensitivity}
-              min={0}
-              max={5}
+              label="Force Threshold"
+              value={sensitivityThresholds.force}
+              min={100}
+              max={2000}
               unit="N"
-              onChange={setForceSensitivity}
+              onChange={(val) => setThresholds(sensitivityThresholds.ultrasonic, Math.round(val))}
             />
           </GlassCard>
         </View>
