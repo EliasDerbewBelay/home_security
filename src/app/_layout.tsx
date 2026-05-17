@@ -96,12 +96,19 @@ function RootLayoutNav() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider style={{ backgroundColor: '#0F172A' }}>
         <PaperProvider theme={MD3DarkTheme}>
-          <ThemeProvider value={colorScheme === 'dark' ? { ...DarkTheme, colors: { ...DarkTheme.colors, background: '#0F172A' } } : DefaultTheme}>
+          <ThemeProvider value={{
+            ...DarkTheme,
+            colors: {
+              ...DarkTheme.colors,
+              background: '#0F172A',
+              card: '#0F172A',
+              border: 'rgba(255, 255, 255, 0.05)',
+            }
+          }}>
             <StatusBar style="light" />
             <Stack screenOptions={{ contentStyle: { backgroundColor: '#0F172A' } }}>
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="contacts" options={{ headerShown: false }} />
               <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
             </Stack>
             <EmergencyAlertScreen />

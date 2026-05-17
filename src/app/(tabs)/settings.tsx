@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Switch, Image, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Switch } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { router } from 'expo-router';
 import { showComingSoon } from '@/utils/feedback';
 import { CyberSlider } from '@/components/ui/CyberSlider';
 import { useAuthStore } from '@/store/authStore';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/config/firebaseConfig';
 
 export default function SettingsScreen() {
   const [emergencyAlerts, setEmergencyAlerts] = useState(true);
@@ -199,7 +201,7 @@ export default function SettingsScreen() {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              onPress={() => router.push('/contacts')}
+              onPress={() => router.push('/(tabs)/contacts')}
               className="p-5 flex-row items-center justify-between border-b border-white/5"
             >
               <View className="flex-row items-center">
@@ -212,9 +214,14 @@ export default function SettingsScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity 
-              onPress={() => {
-                logout();
-                router.replace('/login');
+              onPress={async () => {
+                try {
+                  await signOut(auth);
+                  logout();
+                  router.replace('/(auth)/login');
+                } catch (error) {
+                  console.error('Failed to sign out:', error);
+                }
               }}
               className="p-5 flex-row items-center"
             >

@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { Platform } from "react-native";
 // @ts-ignore - Some Firebase SDK versions have missing type definitions for this export in standard auth path
 import { initializeAuth, getReactNativePersistence, browserLocalPersistence } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const firebaseConfig = {
@@ -22,3 +23,5 @@ export const auth = Platform.OS === 'web'
   : initializeAuth(app, {
       persistence: getReactNativePersistence(AsyncStorage)
     });
+
+export const db = getFirestore(app);

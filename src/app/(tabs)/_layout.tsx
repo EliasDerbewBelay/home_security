@@ -21,8 +21,6 @@ export default function TabLayout() {
           paddingTop: 10,
           elevation: 0,
           shadowOpacity: 0,
-          borderWidth: 1,
-          borderColor: 'rgba(255, 255, 255, 0.05)',
         },
         tabBarActiveTintColor: '#00E676',
         tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.3)',
@@ -51,6 +49,12 @@ export default function TabLayout() {
         options={{
           title: 'Map',
           tabBarIcon: ({ color }) => <FontAwesome5 name="map-marked-alt" size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="contacts"
+        options={{
+          href: null,
         }}
       />
       <Tabs.Screen
