@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { MapUIOverlay } from './MapUIOverlay';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
 
 const FALLBACK_COORD = {
   latitude: 37.78825,
@@ -13,6 +14,23 @@ export default function MapProvider() {
   const { location, loading, errorMsg } = useCurrentLocation();
   const [zoomScale, setZoomScale] = useState(1.8);
   const [searchedLocation, setSearchedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  const scale = useSharedValue(1);
+
+  // Match the identical 2000ms infinite pulsing animation on web
+  useEffect(() => {
+    scale.value = withRepeat(
+      withTiming(1.3, { duration: 1000 }),
+      -1,
+      true
+    );
+  }, []);
+
+  const pulsingStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
 
   const mapCenter = useMemo(() => {
     if (searchedLocation) return searchedLocation;
@@ -84,15 +102,41 @@ export default function MapProvider() {
 
       {/* Mock Map Marker - Centered */}
       <View style={styles.markerContainer}>
-        <View className="items-center">
-          <View className="w-14 h-14 bg-secondary/20 rounded-full items-center justify-center border-2 border-secondary neon-shadow-green">
-            <FontAwesome5 name="home" size={24} color="#00E676" />
-          </View>
-          <View className="bg-background/90 px-3 py-1 rounded-lg mt-2 border border-white/10 shadow-lg">
-            <Text className="text-secondary text-[10px] font-bold tracking-[2px]">HOME HUB</Text>
+        <View className="items-center justify-center position-relative" style={{ width: 120, height: 120 }}>
+          {/* Outer Pulsing Circle */}
+          <Animated.View 
+            style={[
+              {
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: 'rgba(0, 230, 118, 0.2)', // 20% opacity accent green
+                position: 'absolute',
+              },
+              pulsingStyle
+            ]}
+          />
+          {/* Inner Circle with Ionicons Home Icon */}
+          <View 
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              backgroundColor: '#00E676',
+              alignItems: 'center',
+              justifyContent: 'center',
+              elevation: 4,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              zIndex: 10,
+            }}
+          >
+            <Ionicons name="home" size={18} color="white" />
           </View>
           {mapCenter && (
-            <View className="bg-primary/20 px-3 py-1 rounded-lg mt-2 border border-primary/30 shadow-lg">
+            <View className="bg-primary/20 px-3 py-1 rounded-lg mt-6 border border-primary/30 shadow-lg z-20">
               <Text className="text-primary text-[8px] font-bold tracking-widest">
                 {mapCenter.latitude.toFixed(4)}, {mapCenter.longitude.toFixed(4)}
               </Text>

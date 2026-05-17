@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import { useEmergencyStore } from '@/store/emergencyStore';
 import { MapUIOverlay } from './MapUIOverlay';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
 
 const FALLBACK_COORD = {
   latitude: 37.78825,
@@ -16,6 +17,23 @@ export default function MapProvider() {
   const { location, loading, errorMsg } = useCurrentLocation();
   const [searchedLocation, setSearchedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const mapRef = useRef<MapView>(null);
+
+  const scale = useSharedValue(1);
+
+  // Initialize pulsing animation for live marker feel (scale 1.0 -> 1.3 -> 1.0, 2000ms loop)
+  useEffect(() => {
+    scale.value = withRepeat(
+      withTiming(1.3, { duration: 1000 }),
+      -1,
+      true
+    );
+  }, []);
+
+  const pulsingStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
 
   const mapCenter = useMemo(() => {
     if (searchedLocation) return searchedLocation;
@@ -100,14 +118,40 @@ export default function MapProvider() {
         <Marker 
           coordinate={mapCenter}
           anchor={{ x: 0.5, y: 0.5 }}
-          tracksViewChanges={false}
+          tracksViewChanges={true}
         >
-          <View style={{ width: 120, height: 120, alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}>
-            <View className="w-14 h-14 bg-secondary/20 rounded-full items-center justify-center border-2 border-secondary neon-shadow-green">
-              <FontAwesome5 name="home" size={24} color="#00E676" />
-            </View>
-            <View className="bg-background/90 px-3 py-1 rounded-lg mt-2 border border-white/10 shadow-lg">
-              <Text className="text-secondary text-[10px] font-bold tracking-[2px]">HOME HUB</Text>
+          <View style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            {/* Outer Circle: 48x48, 20% opacity accent green, breathing animation */}
+            <Animated.View 
+              style={[
+                {
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: 'rgba(0, 230, 118, 0.2)', // 20% opacity accent green (#00E676)
+                  position: 'absolute',
+                },
+                pulsingStyle
+              ]}
+            />
+            {/* Inner Circle: 32x32, solid accent green with drop shadow */}
+            <View 
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: '#00E676', // Solid Accent green
+                alignItems: 'center',
+                justifyContent: 'center',
+                elevation: 4, // Android drop shadow
+                shadowColor: '#000', // iOS drop shadow
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
+                zIndex: 10,
+              }}
+            >
+              <Ionicons name="home" size={18} color="white" />
             </View>
           </View>
         </Marker>
