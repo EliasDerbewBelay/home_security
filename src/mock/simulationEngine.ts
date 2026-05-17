@@ -1,7 +1,7 @@
 import { SensorEvent, DeviceStatus } from '@/types';
 
 class SimulationEngine {
-  private intervalId: NodeJS.Timeout | null = null;
+  private intervalId: any = null;
   private onEventCallback: ((event: SensorEvent) => void) | null = null;
   private onStatusCallback: ((status: DeviceStatus) => void) | null = null;
   private isActive = false;
@@ -35,28 +35,36 @@ class SimulationEngine {
   private generateRandomEvent() {
     const isUltrasonic = Math.random() > 0.5;
     
-    // SAFE RANGES: 
-    // Ultrasonic: 150-400 cm (no proximity danger)
-    // Force: 0-100 pts (no pressure danger)
-    const value = isUltrasonic 
-      ? Math.floor(Math.random() * 250 + 150) 
-      : Math.floor(Math.random() * 100);
+    // Simulate a security breach attempt with 15% probability
+    const isBreachAttempt = Math.random() < 0.15;
+    
+    let value: number;
+    let triggered: boolean;
 
-    // No danger triggers for now
-    const triggered = false;
+    if (isBreachAttempt) {
+      // Simulate close proximity breach or heavy door force breach
+      value = isUltrasonic 
+        ? Math.floor(Math.random() * 15 + 5) // Proximity: 5 to 20 cm
+        : Math.floor(Math.random() * 800 + 1200); // Force: 1200 to 2000 N
+      triggered = true;
+    } else {
+      // Safe, standard environmental readings
+      value = isUltrasonic 
+        ? Math.floor(Math.random() * 250 + 150) // Proximity: 150 to 400 cm
+        : Math.floor(Math.random() * 100); // Force: 0 to 100 N
+      triggered = false;
+    }
 
     const event: SensorEvent = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 11),
       type: isUltrasonic ? 'ultrasonic' : 'force',
       value,
       triggered,
       timestamp: new Date().toISOString(),
     };
 
-    // Send safe events less frequently or normally
-    if (Math.random() > 0.5) {
-      this.onEventCallback?.(event);
-    }
+    // Forward the event in real-time
+    this.onEventCallback?.(event);
   }
 
   private generateRandomStatus() {

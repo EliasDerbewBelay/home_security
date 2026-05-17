@@ -8,11 +8,12 @@ import { CyberSlider } from '@/components/ui/CyberSlider';
 import { useAuthStore } from '@/store/authStore';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/config/firebaseConfig';
+import { useSettingsStore } from '@/store/settingsStore';
 
 export default function SettingsScreen() {
   const [emergencyAlerts, setEmergencyAlerts] = useState(true);
   const [sensorAlerts, setSensorAlerts] = useState(false);
-  const [mockMode, setMockMode] = useState(false);
+  const { mockMode, setMockMode } = useSettingsStore();
   const [protocol, setProtocol] = useState('HTTP');
   const [ultrasonicThreshold, setUltrasonicThreshold] = useState(45);
   const [forceSensitivity, setForceSensitivity] = useState(0.85);
