@@ -1,22 +1,5 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProfile, AuthState } from '@/types/auth';
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-// Bypass credentials – no backend required
-export const MOCK_CREDENTIALS = {
-  email: 'admin@shieldnet.local',
-  password: 'Admin1234',
-};
-
-export const MOCK_USER: UserProfile = {
-  id: 'mock-user-001',
-  fullName: 'Admin User',
-  email: 'admin@shieldnet.local',
-  createdAt: '2025-01-01T00:00:00.000Z',
-};
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface AuthStoreState extends AuthState {
   login: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -27,84 +10,99 @@ interface AuthStoreState extends AuthState {
   ) => Promise<{ error: string | null }>;
   logout: () => void;
   setLoading: (loading: boolean) => void;
+  initialize: () => void;
 }
 
-export const useAuthStore = create<AuthStoreState>()(
-  persist(
-    (set) => ({
-      user: null,
-      session: null,
-      isLoading: false,
-      isAuthenticated: false,
+export const useAuthStore = create<AuthStoreState>((set) => ({
+  user: null,
+  session: null,
+  isLoading: true, // Start with loading to simulate auth state check
+  isAuthenticated: false,
 
-      setLoading: (isLoading) => set({ isLoading }),
+  setLoading: (isLoading) => set({ isLoading }),
 
-      login: async (email, password) => {
-        set({ isLoading: true });
+  initialize: () => {
+    // Simulate checking for an existing session
+    console.log('AuthStore: Initializing Mock Auth...');
+    setTimeout(() => {
+      set({
+        user: null,
+        session: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    }, 500);
+  },
 
-        // Simulate network delay
-        await new Promise((r) => setTimeout(r, 800));
+  login: async (email, password) => {
+    set({ isLoading: true });
+    try {
+      console.log('AuthStore: Attempting mock login for:', email);
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Accept any email/password combination for testing
+      const mockUser: UserProfile = {
+        id: `mock-uid-${Math.random().toString(36).substring(7)}`,
+        fullName: email.split('@')[0],
+        email: email,
+        createdAt: new Date().toISOString(),
+      };
 
-        const normalizedEmail = email.trim().toLowerCase();
+      set({
+        user: mockUser,
+        session: mockUser.id,
+        isAuthenticated: true,
+        isLoading: false,
+      });
 
-        if (
-          normalizedEmail === MOCK_CREDENTIALS.email &&
-          password === MOCK_CREDENTIALS.password
-        ) {
-          set({
-            user: MOCK_USER,
-            session: 'mock-session-token-' + Date.now(),
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          return { error: null };
-        }
-
-        set({ isLoading: false });
-        return { error: 'Invalid email or password. Use admin@shieldnet.local / Admin1234' };
-      },
-
-      register: async (fullName, email, password) => {
-        set({ isLoading: true });
-
-        // Simulate network delay
-        await new Promise((r) => setTimeout(r, 1000));
-
-        const newUser: UserProfile = {
-          id: 'mock-user-' + Date.now(),
-          fullName,
-          email: email.trim().toLowerCase(),
-          createdAt: new Date().toISOString(),
-        };
-
-        set({
-          user: newUser,
-          session: 'mock-session-token-' + Date.now(),
-          isAuthenticated: true,
-          isLoading: false,
-        });
-
-        return { error: null };
-      },
-
-      logout: () => {
-        set({
-          user: null,
-          session: null,
-          isAuthenticated: false,
-          isLoading: false,
-        });
-      },
-    }),
-    {
-      name: 'auth-storage',
-      storage: createJSONStorage(() => AsyncStorage),
-      // Only persist auth state, not loading flag
-      partialize: (state) => ({
-        user: state.user,
-        session: state.session,
-        isAuthenticated: state.isAuthenticated,
-      }),
+      return { error: null };
+    } catch (error: any) {
+      console.error('AuthStore: Mock login failure:', error);
+      set({ isLoading: false });
+      return { error: 'Failed to authenticate.' };
     }
-  )
-);
+  },
+
+  register: async (fullName, email, password) => {
+    set({ isLoading: true });
+    try {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      const mockUser: UserProfile = {
+        id: `mock-uid-${Math.random().toString(36).substring(7)}`,
+        fullName: fullName,
+        email: email,
+        createdAt: new Date().toISOString(),
+      };
+      
+      set({
+        user: mockUser,
+        session: mockUser.id,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      return { error: null };
+    } catch (error: any) {
+      console.error('Mock Register Error:', error);
+      set({ isLoading: false });
+      return { error: 'Failed to create mock account.' };
+    }
+  },
+
+  logout: async () => {
+    try {
+      set({
+        user: null,
+        session: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error('Mock Logout Error:', error);
+    }
+  },
+}));

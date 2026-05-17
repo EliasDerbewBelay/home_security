@@ -12,13 +12,16 @@ import { hardwareService } from '@/services/hardware/hardwareService';
 import { SecurityFloatingMenu } from '@/components/ui/SecurityFloatingMenu';
 import { showComingSoon } from '@/utils/feedback';
 import { router } from 'expo-router';
-import { useAuthStore } from '@/store/authStore';
+import { auth } from '@/config/firebaseConfig';
+import { signOut } from 'firebase/auth';
 
 export default function DashboardScreen() {
   const { latestUltrasonic, latestForce } = useSensorStore();
-   const { status, setArmed } = useDeviceStore();
+  const { status, setArmed } = useDeviceStore();
   const { mockMode } = useSettingsStore();
-  const { user } = useAuthStore();
+
+  const currentUser = auth.currentUser;
+  const displayName = currentUser?.displayName || 'User';
 
   const toggleArmed = () => {
     const newArmedState = !status.armed;
@@ -26,29 +29,35 @@ export default function DashboardScreen() {
     hardwareService.sendCommand({ action: newArmedState ? 'arm' : 'disarm' });
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.error("Logout failed", e);
+    }
+  };
+
   return (
     <View className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4 pt-12 pb-24">
         {/* Header */}
         <View className="flex-row justify-between items-center mb-8">
-          <TouchableOpacity 
-            onPress={() => showComingSoon('User Profile')}
-            className="flex-row items-center"
-          >
+          <View className="flex-row items-center">
             <View className="w-10 h-10 rounded-full bg-white/10 items-center justify-center border border-white/20 overflow-hidden">
                <FontAwesome5 name="user" size={18} color="white" />
             </View>
             <View className="ml-4">
               <Text className="text-white/40 text-xs font-bold uppercase tracking-widest">Welcome back</Text>
-              <Text className="text-white text-xl font-bold">Good evening, {user?.fullName.split(' ')[0] || 'Agent'}</Text>
+              <Text className="text-white text-xl font-bold">Welcome, {displayName}!</Text>
             </View>
-          </TouchableOpacity>
+          </View>
+
           <TouchableOpacity 
-            onPress={() => showComingSoon('Notifications')}
-            className="w-10 h-10 items-center justify-center relative"
+            onPress={handleLogout}
+            className="flex-row items-center bg-danger/20 border border-danger/50 px-4 py-2 rounded-full"
           >
-            <FontAwesome5 name="bell" size={20} color="#00E676" />
-            <View className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full border border-background" />
+            <FontAwesome5 name="sign-out-alt" size={12} color="#EF4444" />
+            <Text className="text-danger ml-2 text-xs font-bold uppercase tracking-widest">Logout</Text>
           </TouchableOpacity>
         </View>
 

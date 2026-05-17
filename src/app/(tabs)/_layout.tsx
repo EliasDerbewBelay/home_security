@@ -1,18 +1,13 @@
 import React from 'react';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { Tabs, Redirect } from 'expo-router';
-import { View } from 'react-native';
-import { useAuthStore } from '@/store/authStore';
+import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
-  const { isAuthenticated } = useAuthStore();
-  if (!isAuthenticated) return <Redirect href="/login" />;
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        sceneContainerStyle: { backgroundColor: '#0F172A' },
+        sceneStyle: { backgroundColor: '#0F172A' },
         tabBarStyle: {
           backgroundColor: 'rgba(15, 23, 42, 0.95)',
           borderTopWidth: 0,

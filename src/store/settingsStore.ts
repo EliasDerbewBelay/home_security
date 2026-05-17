@@ -22,7 +22,7 @@ export const useSettingsStore = create<SettingsState>()(
       mqttTopic: 'home/security/elias',
       apiUrl: 'http://192.168.1.100',
       socketUrl: 'ws://192.168.1.100:81',
-      mockMode: true,
+      mockMode: false,
       sensitivityThresholds: {
         ultrasonic: 50,
         force: 700,
