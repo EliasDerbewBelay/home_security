@@ -16,19 +16,27 @@ export const useHardware = () => {
   useEffect(() => {
     // Handle events from hardware or mock
     const handleEvent = (event: SensorEvent) => {
-      addEvent(event);
-      
-      // Check if event triggers an emergency
-      if (event.triggered) {
-        const alert: EmergencyAlert = {
-          id: `alert-${Date.now()}`,
-          source: event.type,
-          severity: 'high',
-          location: { lat: 0, lng: 0 }, // Would come from device or GPS
-          resolved: false,
-          createdAt: new Date().toISOString(),
-        };
-        triggerAlert(alert);
+      // 1. Sensor Alerts Case: Only log minor movement/ambient telemetry if enabled
+      if (!event.triggered) {
+        if (settings.sensorAlertsEnabled) {
+          addEvent(event);
+        }
+      } else {
+        // Critical events are recorded in sensor log history for security audit
+        addEvent(event);
+        
+        // 2. Emergency Alerts Case: Only trigger active sirens/overlays if enabled
+        if (settings.emergencyAlertsEnabled) {
+          const alert: EmergencyAlert = {
+            id: `alert-${Date.now()}`,
+            source: event.type,
+            severity: 'high',
+            location: { lat: 0, lng: 0 }, // Would come from device or GPS
+            resolved: false,
+            createdAt: new Date().toISOString(),
+          };
+          triggerAlert(alert);
+        }
       }
     };
 
@@ -60,6 +68,8 @@ export const useHardware = () => {
     settings.mqttUrl, 
     settings.mqttTopic, 
     settings.socketUrl, 
-    settings.mockMode
+    settings.mockMode,
+    settings.emergencyAlertsEnabled,
+    settings.sensorAlertsEnabled
   ]);
 };

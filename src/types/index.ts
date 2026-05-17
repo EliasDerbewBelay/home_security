@@ -50,5 +50,7 @@ export interface AppSettings {
     force: number;
   };
   notificationsEnabled: boolean;
+  emergencyAlertsEnabled: boolean;
+  sensorAlertsEnabled: boolean;
   biometricsEnabled: boolean;
 }

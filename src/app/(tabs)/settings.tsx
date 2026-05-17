@@ -11,9 +11,14 @@ import { auth } from '@/config/firebaseConfig';
 import { useSettingsStore } from '@/store/settingsStore';
 
 export default function SettingsScreen() {
-  const [emergencyAlerts, setEmergencyAlerts] = useState(true);
-  const [sensorAlerts, setSensorAlerts] = useState(false);
-  const { mockMode, setMockMode } = useSettingsStore();
+  const { 
+    mockMode, 
+    setMockMode,
+    emergencyAlertsEnabled,
+    setEmergencyAlertsEnabled,
+    sensorAlertsEnabled,
+    setSensorAlertsEnabled
+  } = useSettingsStore();
   const [protocol, setProtocol] = useState('HTTP');
   const [ultrasonicThreshold, setUltrasonicThreshold] = useState(45);
   const [forceSensitivity, setForceSensitivity] = useState(0.85);
@@ -143,8 +148,8 @@ export default function SettingsScreen() {
                 <Text className="text-white/40 text-xs">Critical breach attempts</Text>
               </View>
               <Switch 
-                value={emergencyAlerts} 
-                onValueChange={setEmergencyAlerts}
+                value={emergencyAlertsEnabled} 
+                onValueChange={setEmergencyAlertsEnabled}
                 trackColor={{ false: '#1E293B', true: '#00E676' }}
                 thumbColor="#fff"
               />
@@ -155,8 +160,8 @@ export default function SettingsScreen() {
                 <Text className="text-white/40 text-xs">Minor movement detected</Text>
               </View>
               <Switch 
-                value={sensorAlerts} 
-                onValueChange={setSensorAlerts}
+                value={sensorAlertsEnabled} 
+                onValueChange={setSensorAlertsEnabled}
                 trackColor={{ false: '#1E293B', true: '#00E676' }}
                 thumbColor="#fff"
               />

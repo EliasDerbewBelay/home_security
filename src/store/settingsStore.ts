@@ -10,6 +10,8 @@ interface SettingsState extends AppSettings {
   setMockMode: (enabled: boolean) => void;
   setThresholds: (ultrasonic: number, force: number) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
+  setEmergencyAlertsEnabled: (enabled: boolean) => void;
+  setSensorAlertsEnabled: (enabled: boolean) => void;
   setBiometricsEnabled: (enabled: boolean) => void;
 }
 
@@ -28,6 +30,8 @@ export const useSettingsStore = create<SettingsState>()(
         force: 700,
       },
       notificationsEnabled: true,
+      emergencyAlertsEnabled: true,
+      sensorAlertsEnabled: true,
       biometricsEnabled: false,
 
       setProtocol: (protocol) => set({ protocol }),
@@ -39,6 +43,8 @@ export const useSettingsStore = create<SettingsState>()(
           sensitivityThresholds: { ...state.sensitivityThresholds, ultrasonic, force } 
         })),
       setNotificationsEnabled: (notificationsEnabled) => set({ notificationsEnabled }),
+      setEmergencyAlertsEnabled: (emergencyAlertsEnabled) => set({ emergencyAlertsEnabled }),
+      setSensorAlertsEnabled: (sensorAlertsEnabled) => set({ sensorAlertsEnabled }),
       setBiometricsEnabled: (biometricsEnabled) => set({ biometricsEnabled }),
     }),
     {
