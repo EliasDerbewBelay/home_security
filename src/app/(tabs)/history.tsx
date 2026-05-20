@@ -65,12 +65,12 @@ export default function HistoryScreen() {
               <View className="flex-row justify-between items-start mb-3">
                 <View className="flex-row items-center">
                   <FontAwesome5 
-                    name={item.type === 'ultrasonic' ? 'wave-square' : 'shoe-prints'} 
+                    name="wave-square" 
                     size={12} 
                     color={item.triggered ? '#FF1744' : 'rgba(255,255,255,0.4)'} 
                   />
                   <Text className="text-white/40 text-[10px] font-bold tracking-widest uppercase ml-2">
-                    {item.type} SENSOR
+                    ULTRASONIC SENSOR
                   </Text>
                 </View>
                 <Text className="text-white/20 text-[10px] font-bold">
@@ -88,7 +88,7 @@ export default function HistoryScreen() {
                    <Text className="text-white/60 text-xs font-bold uppercase">{item.triggered ? 'High Priority' : 'Normal'}</Text>
                 </View>
                 <Text className={`font-mono font-bold ${item.triggered ? 'text-danger' : 'text-primary'}`}>
-                  {item.value}{item.type === 'ultrasonic' ? 'cm' : 'pts'}
+                  {item.value}cm
                 </Text>
               </View>
             </GlassCard>

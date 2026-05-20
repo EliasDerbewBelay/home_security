@@ -31,7 +31,7 @@ export const SecurityFloatingMenu = () => {
     if (action === 'arm') setArmed(true);
     if (action === 'disarm') setArmed(false);
     
-    hardwareService.sendCommand({ action });
+    hardwareService.sendCommand({ action: action as any });
     toggleMenu();
   };
 
@@ -42,8 +42,8 @@ export const SecurityFloatingMenu = () => {
   const menuItems = [
     { label: 'Arm', icon: 'lock', color: '#00E676', action: 'arm' },
     { label: 'Disarm', icon: 'lock-open', color: '#94A3B8', action: 'disarm' },
-    { label: 'Test Alarm', icon: 'bell', color: '#00E5FF', action: 'trigger_siren' },
-    { label: 'Emergency', icon: 'phone-alt', color: '#FF1744', action: 'panic' },
+    { label: 'Test Alarm', icon: 'bell', color: '#00E5FF', action: 'trigger_alarm' },
+    { label: 'Emergency', icon: 'phone-alt', color: '#FF1744', action: 'trigger_alarm' },
   ];
 
   return (

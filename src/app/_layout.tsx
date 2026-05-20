@@ -10,7 +10,6 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/config/firebaseConfig';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { useHardware } from '@/hooks/useHardware';
 import { EmergencyAlertScreen } from '@/screens/EmergencyAlertScreen';
 import { PaperProvider, MD3DarkTheme } from 'react-native-paper';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -57,7 +56,6 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  useHardware();
 
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState<User | null>(null);

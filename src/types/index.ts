@@ -1,6 +1,6 @@
 export interface SensorEvent {
   id: string;
-  type: 'ultrasonic' | 'force';
+  type: 'ultrasonic';
   value: number;
   triggered: boolean;
   timestamp: string;
@@ -35,20 +35,8 @@ export interface HardwareCommand {
   payload?: Record<string, unknown>;
 }
 
-export type TransportProtocol = 'mqtt' | 'websocket' | 'rest';
-
 export interface AppSettings {
-  protocol: TransportProtocol;
-  mqttUrl: string;
-  mqttPort: string;
-  mqttTopic: string;
   apiUrl: string;
-  socketUrl: string;
-  mockMode: boolean;
-  sensitivityThresholds: {
-    ultrasonic: number;
-    force: number;
-  };
   notificationsEnabled: boolean;
   emergencyAlertsEnabled: boolean;
   sensorAlertsEnabled: boolean;

@@ -1,33 +1,42 @@
-import React from 'react';
-import { ScrollView, View, Text, TouchableOpacity, Image } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { ScrollView, View, Text, TouchableOpacity, Animated } from 'react-native';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { MetricCard } from '@/components/ui/MetricCard';
-import { SensorRow } from '@/components/ui/SensorRow';
-import { ActivityChart } from '@/components/ui/ActivityChart';
 import { useSensorStore } from '@/store/sensorStore';
 import { useDeviceStore } from '@/store/deviceStore';
-import { useSettingsStore } from '@/store/settingsStore';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { hardwareService } from '@/services/hardware/hardwareService';
+import { useHardwarePolling } from '@/hooks/useHardwarePolling';
 import { SecurityFloatingMenu } from '@/components/ui/SecurityFloatingMenu';
-import { showComingSoon } from '@/utils/feedback';
-import { router } from 'expo-router';
 import { auth } from '@/config/firebaseConfig';
 import { signOut } from 'firebase/auth';
 
 export default function DashboardScreen() {
-  const { latestUltrasonic, latestForce } = useSensorStore();
-  const { status, setArmed } = useDeviceStore();
-  const { mockMode } = useSettingsStore();
+  const { distance, buzzerActive } = useSensorStore();
+  const { connected } = useDeviceStore();
+  const { startPolling, stopPolling } = useHardwarePolling();
 
   const currentUser = auth.currentUser;
   const displayName = currentUser?.displayName || 'User';
 
-  const toggleArmed = () => {
-    const newArmedState = !status.armed;
-    setArmed(newArmedState);
-    hardwareService.sendCommand({ action: newArmedState ? 'arm' : 'disarm' });
-  };
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    startPolling();
+    return () => stopPolling();
+  }, []);
+
+  useEffect(() => {
+    if (buzzerActive) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.2, duration: 500, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 500, useNativeDriver: true })
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+      pulseAnim.stopAnimation();
+    }
+  }, [buzzerActive]);
 
   const handleLogout = async () => {
     try {
@@ -61,82 +70,64 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Security Hub Card */}
-        <GlassCard 
-          className="mb-8 p-8 items-center"
-          neonColor={status.armed ? 'blue' : 'none'}
-        >
-          <View className={`w-32 h-32 rounded-full items-center justify-center mb-6 ${status.armed ? 'neon-shadow-blue bg-primary/20' : 'bg-white/5 border border-white/10'}`}>
-            <FontAwesome5 
-              name="shield-alt" 
-              size={60} 
-              color={status.armed ? '#00E5FF' : 'rgba(255,255,255,0.1)'} 
-            />
-          </View>
-          
-          <View className="flex-row items-center mb-4">
-            <FontAwesome5 name={status.armed ? 'lock' : 'lock-open'} size={24} color="#00E676" />
-            <Text className="text-secondary text-4xl font-bold ml-4 tracking-tighter">
-              {status.armed ? 'ARMED' : 'DISARMED'}
+        {/* Connection Status Card */}
+        <GlassCard className="mb-6 p-6 flex-row justify-between items-center">
+          <Text className="text-white font-bold text-lg">System Status</Text>
+          <View className={`flex-row items-center px-4 py-2 rounded-full border ${connected ? 'bg-primary/20 border-primary/50' : 'bg-danger/20 border-danger/50'}`}>
+            <View className={`w-3 h-3 rounded-full mr-2 ${connected ? 'bg-primary neon-shadow-blue' : 'bg-danger neon-shadow-red'}`} />
+            <Text className={`font-bold tracking-widest uppercase ${connected ? 'text-primary' : 'text-danger'}`}>
+              {connected ? 'ONLINE' : 'OFFLINE'}
             </Text>
-          </View>
-
-          <View className="flex-row items-center bg-black/40 px-4 py-1.5 rounded-full border border-white/5">
-            <View className="w-2 h-2 bg-primary rounded-full mr-3 neon-shadow-blue" />
-            <Text className="text-primary text-[10px] font-bold tracking-widest uppercase">
-              ESP8266 CONNECTED
-            </Text>
-          </View>
-
-          <View className="w-full flex-row justify-between items-center mt-8 pt-6 border-t border-white/5">
-            <Text className="text-white/60 font-bold">System Defense</Text>
-            <TouchableOpacity 
-              onPress={toggleArmed}
-              className={`w-14 h-7 rounded-full p-1 ${status.armed ? 'bg-secondary' : 'bg-white/10'}`}
-            >
-              <View className={`w-5 h-5 bg-white rounded-full ${status.armed ? 'ml-auto' : ''}`} />
-            </TouchableOpacity>
           </View>
         </GlassCard>
 
-        {/* KPI Row */}
-        <View className="flex-row space-x-3 mb-8">
-          <TouchableOpacity className="flex-1" onPress={() => router.push('/history')}>
-            <MetricCard label="Alerts" value={0} />
-          </TouchableOpacity>
-          <TouchableOpacity className="flex-1" onPress={() => router.push('/sensors')}>
-            <MetricCard label="Sensors" value={12} />
-          </TouchableOpacity>
-          <TouchableOpacity className="flex-1" onPress={() => showComingSoon('System Uptime Details')}>
-            <MetricCard label="Uptime" value="99.9%" isGreen />
-          </TouchableOpacity>
-        </View>
-
-        {/* Live Sensors */}
-        <Text className="text-white/40 text-[10px] font-bold tracking-[4px] uppercase mb-4">Live Sensors</Text>
-        <SensorRow 
-          name="Front Entry" 
-          status="Ultrasonic Active" 
-          value={`${((latestUltrasonic?.value ?? 240) / 100).toFixed(1)}m`}
-          icon="broadcast-tower"
-          progress={Math.min((latestUltrasonic?.value ?? 0) / 400, 1)}
-        />
-        <SensorRow 
-          name="Kitchen Window" 
-          status="Force Stable" 
-          value={`${latestForce?.value ?? 0}kg`}
-          icon="th-large"
-          progress={Math.min((latestForce?.value ?? 0) / 1024, 1)}
-        />
-
-        {/* Activity Chart */}
-        <View className="mt-8 mb-24 p-6 glass-card rounded-3xl">
+        {/* Ultrasonic Sensor Card */}
+        <GlassCard className="mb-6 p-6">
           <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-white/40 text-[10px] font-bold tracking-widest uppercase">Activity - Last Hour</Text>
-            <FontAwesome5 name="redo-alt" size={12} color="rgba(255,255,255,0.2)" />
+            <View className="flex-row items-center">
+              <View className="w-10 h-10 rounded-full bg-white/10 items-center justify-center mr-3">
+                <FontAwesome5 name="broadcast-tower" size={16} color="white" />
+              </View>
+              <Text className="text-white font-bold text-lg">Ultrasonic Range</Text>
+            </View>
+            <Text className="text-white text-3xl font-mono">
+              {distance !== null ? `${distance.toFixed(1)} cm` : '--'}
+            </Text>
           </View>
-          <ActivityChart />
-        </View>
+
+          <View className="w-full h-4 bg-black/40 rounded-full overflow-hidden border border-white/5 mb-4">
+            <View 
+              className={`h-full ${buzzerActive ? 'bg-danger' : 'bg-secondary'}`} 
+              style={{ width: `${Math.min((distance || 0) / 400 * 100, 100)}%` }} 
+            />
+          </View>
+
+          <View className="flex-row items-center justify-center">
+            <Text className={`font-bold uppercase tracking-widest ${buzzerActive ? 'text-danger' : 'text-secondary'}`}>
+              {buzzerActive ? 'Object Detected' : 'Area Clear'}
+            </Text>
+          </View>
+        </GlassCard>
+
+        {/* Buzzer Status Card */}
+        <GlassCard className="mb-8 p-6 items-center justify-center">
+          <Text className="text-white/60 font-bold uppercase tracking-widest mb-6">Physical Buzzer</Text>
+          
+          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            <View className={`w-32 h-32 rounded-full items-center justify-center border-4 ${buzzerActive ? 'bg-danger/20 border-danger neon-shadow-red' : 'bg-secondary/20 border-secondary neon-shadow-green'}`}>
+              <FontAwesome5 
+                name={buzzerActive ? 'bell' : 'bell-slash'} 
+                size={40} 
+                color={buzzerActive ? '#FF1744' : '#00E676'} 
+              />
+            </View>
+          </Animated.View>
+          
+          <Text className={`mt-6 text-3xl font-bold uppercase tracking-widest ${buzzerActive ? 'text-danger' : 'text-secondary'}`}>
+            {buzzerActive ? 'BUZZER ON' : 'BUZZER OFF'}
+          </Text>
+        </GlassCard>
+
       </ScrollView>
 
       {/* Animated Security Menu */}
@@ -144,6 +135,3 @@ export default function DashboardScreen() {
     </View>
   );
 }
-
-
-

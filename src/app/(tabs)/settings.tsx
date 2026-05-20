@@ -1,27 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Switch, Modal, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Modal, StyleSheet, TextInput, Alert } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { router } from 'expo-router';
-import { showComingSoon } from '@/utils/feedback';
-import { CyberSlider } from '@/components/ui/CyberSlider';
 import { useAuthStore } from '@/store/authStore';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/config/firebaseConfig';
+import { auth, db } from '@/config/firebaseConfig';
+import { doc, setDoc } from 'firebase/firestore';
 import { useSettingsStore } from '@/store/settingsStore';
+import { hardwareService } from '@/services/hardware/hardwareService';
 
 export default function SettingsScreen() {
   const { 
-    mockMode, 
-    setMockMode,
-    emergencyAlertsEnabled,
-    setEmergencyAlertsEnabled,
-    sensorAlertsEnabled,
-    setSensorAlertsEnabled,
-    sensitivityThresholds,
-    setThresholds
+    apiUrl,
+    setApiConfig,
+    pollInterval,
+    setPollInterval
   } = useSettingsStore();
-  const [protocol, setProtocol] = useState('HTTP');
+  
+  const espIp = apiUrl.replace(/^https?:\/\//, '').replace(/:\d+$/, '');
+  const [editingIp, setEditingIp] = useState(espIp);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<'success' | 'fail' | null>(null);
   
   const { logout } = useAuthStore();
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
@@ -33,6 +33,45 @@ export default function SettingsScreen() {
     });
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    setEditingIp(espIp);
+  }, [espIp]);
+
+  const saveSettingsToFirestore = async (ip: string, interval: number) => {
+    if (currentUser) {
+      try {
+        await setDoc(doc(db, 'users', currentUser.uid, 'settings', 'hardware'), {
+          espIp: ip,
+          pollInterval: interval,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (e) {
+        console.error("Failed to save settings to Firestore", e);
+      }
+    }
+  };
+
+  const handleIpSubmit = () => {
+    const trimmed = editingIp.trim();
+    if (trimmed && trimmed !== espIp) {
+      setApiConfig(`http://${trimmed}`);
+      saveSettingsToFirestore(trimmed, pollInterval);
+    }
+  };
+
+  const handleIntervalChange = (interval: number) => {
+    setPollInterval(interval);
+    saveSettingsToFirestore(espIp, interval);
+  };
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    const success = await hardwareService.checkOnline(`http://${editingIp.trim()}`);
+    setTestResult(success ? 'success' : 'fail');
+    setIsTesting(false);
+  };
 
   const SectionHeader = ({ title }: { title: string }) => (
     <Text className="text-white/40 text-[10px] font-bold tracking-[4px] uppercase px-6 mb-3 mt-8">
@@ -56,142 +95,65 @@ export default function SettingsScreen() {
           </View>
           <Text className="text-white text-2xl font-bold">Settings</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          onPress={() => showComingSoon('Alert Preferences')}
-          className="w-10 h-10 bg-white/5 rounded-xl items-center justify-center border border-white/10"
-        >
-          <FontAwesome5 name="bell" size={18} color="white" />
-        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hardware Section */}
-        <SectionHeader title="Hardware" />
+        <SectionHeader title="ESP8266 Hardware" />
         <View className="px-4">
           <GlassCard className="p-6">
+            <Text className="text-white/60 text-xs mb-6 leading-relaxed">
+              Ensure your phone is connected to the same WiFi network as the device.
+            </Text>
+
             <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-white/80 text-lg font-medium">ESP8266 IP</Text>
-              <Text className="text-secondary font-mono text-lg">192.168.1.142</Text>
-            </View>
-            
-            <View className="flex-row justify-between items-center mb-8">
-              <Text className="text-white/80 text-lg font-medium">Port</Text>
-              <View className="bg-black/40 px-4 py-2 rounded-lg border border-white/5 w-24 items-end">
-                <Text className="text-white font-mono text-lg">8080</Text>
-              </View>
+              <Text className="text-white/80 text-lg font-medium">IP Address</Text>
+              <TextInput
+                value={editingIp}
+                onChangeText={setEditingIp}
+                onBlur={handleIpSubmit}
+                onSubmitEditing={handleIpSubmit}
+                className="text-secondary font-mono text-lg bg-black/40 px-4 py-2 rounded-lg border border-white/10 text-right"
+                style={{ minWidth: 160, color: '#00E676' }}
+                placeholderTextColor="rgba(255,255,255,0.2)"
+                placeholder="10.232.223.222"
+                keyboardType="numeric"
+                returnKeyType="done"
+              />
             </View>
 
-            <Text className="text-white/40 text-xs font-bold uppercase mb-3">Protocol</Text>
+            <TouchableOpacity 
+              onPress={handleTestConnection}
+              disabled={isTesting}
+              className={`py-3 rounded-xl items-center flex-row justify-center mb-2 ${isTesting ? 'bg-white/10' : 'bg-primary/20 border border-primary/40'}`}
+            >
+              <FontAwesome5 name={isTesting ? 'spinner' : 'wifi'} size={14} color={isTesting ? 'white' : '#00E5FF'} />
+              <Text className={`font-bold ml-2 ${isTesting ? 'text-white' : 'text-primary'}`}>
+                {isTesting ? 'Testing...' : 'Test Connection'}
+              </Text>
+            </TouchableOpacity>
+
+            {testResult && (
+              <Text className={`text-center text-xs font-bold mt-2 ${testResult === 'success' ? 'text-secondary' : 'text-danger'}`}>
+                {testResult === 'success' ? 'Connection Successful!' : 'Connection Failed!'}
+              </Text>
+            )}
+
+            <View className="h-[1px] bg-white/10 my-6" />
+
+            <Text className="text-white/40 text-xs font-bold uppercase mb-3">Poll Interval</Text>
             <View className="flex-row bg-black/40 p-1 rounded-xl border border-white/5">
-              {['HTTP', 'TCP', 'UDP'].map((p) => (
+              {[500, 1000, 2000].map((interval) => (
                 <TouchableOpacity 
-                  key={p}
-                  onPress={() => setProtocol(p)}
-                  className={`flex-1 py-3 rounded-lg items-center ${protocol === p ? 'bg-secondary' : ''}`}
+                  key={interval}
+                  onPress={() => handleIntervalChange(interval)}
+                  className={`flex-1 py-3 rounded-lg items-center ${pollInterval === interval ? 'bg-secondary' : ''}`}
                 >
-                  <Text className={`font-bold text-xs ${protocol === p ? 'text-background' : 'text-white/40'}`}>
-                    {p}
+                  <Text className={`font-bold text-xs ${pollInterval === interval ? 'text-background' : 'text-white/40'}`}>
+                    {interval}ms
                   </Text>
                 </TouchableOpacity>
               ))}
-            </View>
-          </GlassCard>
-        </View>
-
-        {/* MQTT Section */}
-        <SectionHeader title="MQTT" />
-        <View className="px-4">
-          <GlassCard className="p-6">
-            <Text className="text-white/40 text-xs font-bold uppercase mb-2">Broker URL</Text>
-            <View className="bg-black/60 p-4 rounded-xl border border-white/5 mb-6">
-              <Text className="text-white/80 font-mono">mqtt://shieldnet.io:1883</Text>
-            </View>
-
-            <Text className="text-white/40 text-xs font-bold uppercase mb-2">Topic Prefix</Text>
-            <View className="bg-black/60 p-4 rounded-xl border border-white/5">
-              <Text className="text-white/80 font-mono">sn/node_01/</Text>
-            </View>
-          </GlassCard>
-        </View>
-
-        {/* Sensors Section */}
-        <SectionHeader title="Sensors" />
-        <View className="px-4">
-          <GlassCard className="p-6">
-            <CyberSlider 
-              label="Ultrasonic Threshold"
-              value={sensitivityThresholds.ultrasonic}
-              min={10}
-              max={400}
-              unit="cm"
-              onChange={(val) => setThresholds(Math.round(val), sensitivityThresholds.force)}
-            />
-
-            <CyberSlider 
-              label="Force Threshold"
-              value={sensitivityThresholds.force}
-              min={100}
-              max={2000}
-              unit="N"
-              onChange={(val) => setThresholds(sensitivityThresholds.ultrasonic, Math.round(val))}
-            />
-          </GlassCard>
-        </View>
-
-        {/* Notifications Section */}
-        <SectionHeader title="Notifications" />
-        <View className="px-4">
-          <GlassCard className="p-0 overflow-hidden">
-            <View className="p-5 flex-row items-center justify-between border-b border-white/5">
-              <View>
-                <Text className="text-white font-bold">Emergency Alerts</Text>
-                <Text className="text-white/40 text-xs">Critical breach attempts</Text>
-              </View>
-              <Switch 
-                value={emergencyAlertsEnabled} 
-                onValueChange={setEmergencyAlertsEnabled}
-                trackColor={{ false: '#1E293B', true: '#00E676' }}
-                thumbColor="#fff"
-              />
-            </View>
-            <View className="p-5 flex-row items-center justify-between">
-              <View>
-                <Text className="text-white font-bold">Sensor Alerts</Text>
-                <Text className="text-white/40 text-xs">Minor movement detected</Text>
-              </View>
-              <Switch 
-                value={sensorAlertsEnabled} 
-                onValueChange={setSensorAlertsEnabled}
-                trackColor={{ false: '#1E293B', true: '#00E676' }}
-                thumbColor="#fff"
-              />
-            </View>
-          </GlassCard>
-        </View>
-
-        {/* Simulation Section */}
-        <SectionHeader title="Simulation" />
-        <View className="px-4">
-          <GlassCard className="p-6">
-            <View className="flex-row justify-between items-center mb-4">
-              <View className="flex-row items-center">
-                <Text className="text-white font-bold mr-3">Mock Mode</Text>
-                <View className="bg-white/10 px-2 py-0.5 rounded border border-white/10">
-                  <Text className="text-white/60 text-[8px] font-bold">DEV</Text>
-                </View>
-              </View>
-              <Switch 
-                value={mockMode} 
-                onValueChange={setMockMode}
-                trackColor={{ false: '#1E293B', true: '#00E676' }}
-                thumbColor="#fff"
-              />
-            </View>
-            <View className="flex-row bg-white/5 p-4 rounded-xl border border-white/5">
-              <FontAwesome5 name="exclamation-triangle" size={14} color="rgba(255,255,255,0.4)" style={{ marginTop: 2 }} />
-              <Text className="text-white/40 text-xs leading-relaxed ml-3 flex-1">
-                Mock mode generates synthetic sensor data and bypasses hardware connection. Use for UI testing only.
-              </Text>
             </View>
           </GlassCard>
         </View>

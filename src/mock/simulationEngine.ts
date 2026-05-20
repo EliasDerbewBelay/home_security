@@ -34,8 +34,6 @@ class SimulationEngine {
   }
 
   private generateRandomEvent() {
-    const isUltrasonic = Math.random() > 0.5;
-    
     // Simulate a security breach attempt with 15% probability
     const isBreachAttempt = Math.random() < 0.15;
     
@@ -43,28 +41,20 @@ class SimulationEngine {
     let triggered: boolean;
 
     if (isBreachAttempt) {
-      // Simulate close proximity breach or heavy door force breach
-      value = isUltrasonic 
-        ? Math.floor(Math.random() * 15 + 5) // Proximity: 5 to 20 cm
-        : Math.floor(Math.random() * 800 + 1200); // Force: 1200 to 2000 N
+      // Simulate close proximity breach
+      value = Math.floor(Math.random() * 15 + 5); // Proximity: 5 to 20 cm
     } else {
       // Safe, standard environmental readings
-      value = isUltrasonic 
-        ? Math.floor(Math.random() * 250 + 150) // Proximity: 150 to 400 cm
-        : Math.floor(Math.random() * 100); // Force: 0 to 100 N
+      value = Math.floor(Math.random() * 250 + 150); // Proximity: 150 to 400 cm
     }
 
     // Evaluate triggered state dynamically based on the live user settings thresholds
     const thresholds = useSettingsStore.getState().sensitivityThresholds;
-    if (isUltrasonic) {
-      triggered = value <= thresholds.ultrasonic;
-    } else {
-      triggered = value >= thresholds.force;
-    }
+    triggered = value <= thresholds.ultrasonic;
 
     const event: SensorEvent = {
       id: Math.random().toString(36).substring(2, 11),
-      type: isUltrasonic ? 'ultrasonic' : 'force',
+      type: 'ultrasonic',
       value,
       triggered,
       timestamp: new Date().toISOString(),

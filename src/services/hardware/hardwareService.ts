@@ -1,76 +1,40 @@
-import { 
-  SensorEvent, 
-  DeviceStatus, 
-  HardwareCommand, 
-  TransportProtocol 
-} from '@/types';
-import { mqttClient } from '../mqtt/mqttClient';
-import { socketClient } from '../websocket/socketClient';
-import { apiClient } from '../api/apiClient';
+import axios from 'axios'
 
-interface HardwareServiceConfig {
-  protocol: TransportProtocol;
-  mqttUrl: string;
-  mqttTopicPrefix: string;
-  socketUrl: string;
-  mockMode: boolean;
+const ESP_URL = process.env.EXPO_PUBLIC_ESP8266_URL
+
+export interface ESP8266Response {
+  distance: number
+  buzzer: 'ON' | 'OFF'
 }
 
-class HardwareService {
-  private config: HardwareServiceConfig | null = null;
-  private onEventCallback: ((event: SensorEvent) => void) | null = null;
-  private onStatusCallback: ((status: DeviceStatus) => void) | null = null;
-
-  initialize(config: HardwareServiceConfig) {
-    this.config = config;
-    
-    if (config.mockMode) {
-      console.log('HardwareService: Mock Mode Active');
-      return;
-    }
-
-    if (config.protocol === 'mqtt') {
-      mqttClient.onSensorEvent((e) => this.onEventCallback?.(e));
-      mqttClient.onDeviceStatus((s) => this.onStatusCallback?.(s));
-      mqttClient.connect(config.mqttUrl, config.mqttTopicPrefix);
-    } else if (config.protocol === 'websocket') {
-      socketClient.onSensorEvent((e) => this.onEventCallback?.(e));
-      socketClient.onDeviceStatus((s) => this.onStatusCallback?.(s));
-      socketClient.connect(config.socketUrl);
-    }
-  }
-
-  onSensorEvent(callback: (event: SensorEvent) => void) {
-    this.onEventCallback = callback;
-  }
-
-  onDeviceStatus(callback: (status: DeviceStatus) => void) {
-    this.onStatusCallback = callback;
-  }
-
-  async sendCommand(command: HardwareCommand) {
-    if (this.config?.mockMode) {
-      console.log('HardwareService (Mock): Sending command', command);
-      return;
-    }
-
-    switch (this.config?.protocol) {
-      case 'mqtt':
-        mqttClient.sendCommand(this.config.mqttTopicPrefix, command);
-        break;
-      case 'websocket':
-        socketClient.sendCommand(command);
-        break;
-      case 'rest':
-        await apiClient.post('/command', command);
-        break;
-    }
-  }
-
-  disconnect() {
-    mqttClient.disconnect();
-    socketClient.disconnect();
-  }
+export interface DeviceReading {
+  distance: number
+  buzzerActive: boolean
+  timestamp: string
+  deviceOnline: boolean
 }
 
-export const hardwareService = new HardwareService();
+export const hardwareService = {
+
+  async fetchReading(): Promise<DeviceReading> {
+    const response = await axios.get<ESP8266Response>(
+      `${ESP_URL}/`,
+      { timeout: 3000 }
+    )
+    return {
+      distance: response.data.distance,
+      buzzerActive: response.data.buzzer === 'ON',
+      timestamp: new Date().toISOString(),
+      deviceOnline: true,
+    }
+  },
+
+  async checkOnline(customUrl?: string): Promise<boolean> {
+    try {
+      await axios.get(`${customUrl || ESP_URL}/`, { timeout: 2000 })
+      return true
+    } catch {
+      return false
+    }
+  },
+}

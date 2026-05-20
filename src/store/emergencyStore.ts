@@ -1,31 +1,29 @@
 import { create } from 'zustand';
-import { EmergencyAlert } from '@/types';
+
+interface EmergencyAlertInfo {
+  source: string;
+  value: number;
+  severity: 'high' | 'medium';
+}
 
 interface EmergencyState {
-  activeAlert: EmergencyAlert | null;
-  alertHistory: EmergencyAlert[];
-  isCountdownActive: boolean;
-  triggerAlert: (alert: EmergencyAlert) => void;
-  resolveAlert: (id: string) => void;
-  setCountdownActive: (active: boolean) => void;
+  isActive: boolean;
+  currentAlert: EmergencyAlertInfo | null;
+  triggerEmergency: (alert: EmergencyAlertInfo) => void;
+  resolveEmergency: () => void;
 }
 
 export const useEmergencyStore = create<EmergencyState>((set) => ({
-  activeAlert: null,
-  alertHistory: [],
-  isCountdownActive: false,
+  isActive: false,
+  currentAlert: null,
 
-  triggerAlert: (alert) => set((state) => ({
-    activeAlert: alert,
-    alertHistory: [alert, ...state.alertHistory],
-    isCountdownActive: true
-  })),
+  triggerEmergency: (alert) => set({
+    isActive: true,
+    currentAlert: alert
+  }),
 
-  resolveAlert: (id) => set((state) => ({
-    activeAlert: state.activeAlert?.id === id ? null : state.activeAlert,
-    alertHistory: state.alertHistory.map(a => a.id === id ? { ...a, resolved: true } : a),
-    isCountdownActive: false
-  })),
-
-  setCountdownActive: (isCountdownActive) => set({ isCountdownActive }),
+  resolveEmergency: () => set({
+    isActive: false,
+    currentAlert: null
+  }),
 }));
