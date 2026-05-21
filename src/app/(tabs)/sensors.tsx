@@ -4,11 +4,13 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { SensorRow } from '@/components/ui/SensorRow';
 import { useSensorStore } from '@/store/sensorStore';
 import { useDeviceStore } from '@/store/deviceStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { FontAwesome5 } from '@expo/vector-icons';
 
 export default function SensorsScreen() {
-  const { latestUltrasonic } = useSensorStore();
-  const { status } = useDeviceStore();
+  const { distance } = useSensorStore();
+  const { connected } = useDeviceStore();
+  const { apiUrl } = useSettingsStore();
 
   return (
     <View className="flex-1 bg-background p-4 pt-12">
@@ -23,9 +25,9 @@ export default function SensorsScreen() {
         <SensorRow 
           name="Front Entry" 
           status="Ultrasonic Proximity" 
-          value={`${((latestUltrasonic?.value ?? 0) / 100).toFixed(1)}m`}
+          value={`${((distance ?? 0) / 100).toFixed(1)}m`}
           icon="broadcast-tower"
-          progress={Math.min((latestUltrasonic?.value ?? 0) / 400, 1)}
+          progress={Math.min((distance ?? 0) / 400, 1)}
         />
 
 
@@ -34,16 +36,16 @@ export default function SensorsScreen() {
           <Text className="text-white/40 text-[10px] font-bold tracking-[4px] uppercase mb-4">NETWORK NODES</Text>
           <GlassCard className="mb-3 p-4 flex-row items-center justify-between">
             <View className="flex-row items-center">
-              <FontAwesome5 name="microchip" size={16} color={status.connected ? '#00E676' : '#FF1744'} />
+              <FontAwesome5 name="microchip" size={16} color={connected ? '#00E676' : '#FF1744'} />
               <View className="ml-4">
                 <Text className="text-white font-bold">Node-ESP8266-01</Text>
-                <Text className="text-white/40 text-xs font-mono">{status.ip}</Text>
+                <Text className="text-white/40 text-xs font-mono">{apiUrl.replace(/^https?:\/\//, '')}</Text>
               </View>
             </View>
             <View className="flex-row items-center">
-              <View className={`w-2 h-2 rounded-full mr-2 ${status.connected ? 'bg-secondary' : 'bg-danger'}`} />
-              <Text className={`font-bold ${status.connected ? 'text-secondary' : 'text-danger'}`}>
-                {status.connected ? 'ONLINE' : 'OFFLINE'}
+              <View className={`w-2 h-2 rounded-full mr-2 ${connected ? 'bg-secondary' : 'bg-danger'}`} />
+              <Text className={`font-bold ${connected ? 'text-secondary' : 'text-danger'}`}>
+                {connected ? 'ONLINE' : 'OFFLINE'}
               </Text>
             </View>
           </GlassCard>
