@@ -24,22 +24,24 @@ export const useHardwarePolling = () => {
       const reading = await hardwareService.fetchReading()
       failureCountRef.current = 0
 
+      const currentIsActive = useEmergencyStore.getState().isActive;
+      const currentIsArmed = useDeviceStore.getState().isArmed;
+
+      const effectiveBuzzerActive = currentIsArmed && reading.buzzerActive;
+
       // Update sensor store
       updateSensor({
         distance: reading.distance,
-        buzzerActive: reading.buzzerActive,
-        triggered: reading.buzzerActive,
+        buzzerActive: effectiveBuzzerActive,
+        triggered: effectiveBuzzerActive,
         lastUpdated: reading.timestamp,
       })
 
       // Update device status
       setDeviceStatus({ connected: true })
 
-      // Read fresh state directly to avoid stale closures in setInterval
-      const currentIsActive = useEmergencyStore.getState().isActive;
-
       // Trigger emergency if buzzer is ON and no active emergency
-      if (reading.buzzerActive && !currentIsActive) {
+      if (effectiveBuzzerActive && !currentIsActive) {
         triggerEmergency({
           source: 'ultrasonic',
           value: reading.distance,
@@ -62,7 +64,7 @@ export const useHardwarePolling = () => {
         } catch (err) {
           console.error("Failed to log alert to Firestore", err);
         }
-      } else if (!reading.buzzerActive && currentIsActive) {
+      } else if (!effectiveBuzzerActive && currentIsActive) {
         // Resolve emergency when buzzer goes OFF
         resolveEmergency();
         

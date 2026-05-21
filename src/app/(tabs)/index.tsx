@@ -5,13 +5,13 @@ import { useSensorStore } from '@/store/sensorStore';
 import { useDeviceStore } from '@/store/deviceStore';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useHardwarePolling } from '@/hooks/useHardwarePolling';
-import { SecurityFloatingMenu } from '@/components/ui/SecurityFloatingMenu';
+
 import { auth } from '@/config/firebaseConfig';
 import { signOut } from 'firebase/auth';
 
 export default function DashboardScreen() {
   const { distance, buzzerActive } = useSensorStore();
-  const { connected } = useDeviceStore();
+  const { connected, isArmed, setIsArmed } = useDeviceStore();
   const { startPolling, stopPolling } = useHardwarePolling();
 
   const currentUser = auth.currentUser;
@@ -81,6 +81,22 @@ export default function DashboardScreen() {
           </View>
         </GlassCard>
 
+        {/* Security System Armed Status Card */}
+        <GlassCard className="mb-6 p-6 flex-row justify-between items-center">
+          <View className="flex-row items-center">
+            <FontAwesome5 name="shield-alt" size={20} color={isArmed ? '#00E676' : '#94A3B8'} />
+            <Text className="text-white font-bold text-lg ml-3">Security System</Text>
+          </View>
+          <TouchableOpacity 
+            onPress={() => setIsArmed(!isArmed)}
+            className={`px-4 py-2 rounded-full border ${isArmed ? 'bg-primary/20 border-primary/50' : 'bg-gray-500/20 border-gray-500/50'}`}
+          >
+            <Text className={`font-bold tracking-widest uppercase text-xs ${isArmed ? 'text-primary' : 'text-gray-400'}`}>
+              {isArmed ? 'ARMED' : 'DISARMED'}
+            </Text>
+          </TouchableOpacity>
+        </GlassCard>
+
         {/* Ultrasonic Sensor Card */}
         <GlassCard className="mb-6 p-6">
           <View className="flex-row justify-between items-center mb-4">
@@ -130,8 +146,7 @@ export default function DashboardScreen() {
 
       </ScrollView>
 
-      {/* Animated Security Menu */}
-      <SecurityFloatingMenu />
+
     </View>
   );
 }
