@@ -1,6 +1,6 @@
 export interface SensorEvent {
   id: string;
-  type: 'ultrasonic';
+  type: 'ultrasonic' | 'force';
   value: number;
   triggered: boolean;
   timestamp: string;

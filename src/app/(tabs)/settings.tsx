@@ -53,10 +53,14 @@ export default function SettingsScreen() {
   };
 
   const handleIpSubmit = () => {
-    const trimmed = editingIp.trim();
+    let trimmed = editingIp.trim();
+    // Remove any protocol and trailing slashes if the user pasted a full URL
+    trimmed = trimmed.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    
     if (trimmed && trimmed !== espIp) {
       setApiConfig(`http://${trimmed}`);
       saveSettingsToFirestore(trimmed, pollInterval);
+      setEditingIp(trimmed); // Update the input field to reflect the cleaned IP
     }
   };
 

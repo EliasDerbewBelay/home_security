@@ -5,14 +5,27 @@ import { useSensorStore } from '@/store/sensorStore';
 import { useDeviceStore } from '@/store/deviceStore';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useHardwarePolling } from '@/hooks/useHardwarePolling';
+import { useSettingsStore } from '@/store/settingsStore';
+import { hardwareService } from '@/services/hardware/hardwareService';
 
 import { auth } from '@/config/firebaseConfig';
 import { signOut } from 'firebase/auth';
 
 export default function DashboardScreen() {
-  const { distance, buzzerActive } = useSensorStore();
+  const { distance, weight, buzzerActive } = useSensorStore();
   const { connected, isArmed, setIsArmed } = useDeviceStore();
   const { startPolling, stopPolling } = useHardwarePolling();
+
+  const handleToggleArm = async () => {
+    const nextArmed = !isArmed;
+    setIsArmed(nextArmed);
+    try {
+      const { apiUrl } = useSettingsStore.getState();
+      await hardwareService.fetchReading(apiUrl, nextArmed);
+    } catch (e) {
+      console.warn("Failed to instantly sync armed status with hardware:", e);
+    }
+  };
 
   const currentUser = auth.currentUser;
   const displayName = currentUser?.displayName || 'User';
@@ -88,7 +101,7 @@ export default function DashboardScreen() {
             <Text className="text-white font-bold text-lg ml-3">Security System</Text>
           </View>
           <TouchableOpacity 
-            onPress={() => setIsArmed(!isArmed)}
+            onPress={handleToggleArm}
             className={`px-4 py-2 rounded-full border ${isArmed ? 'bg-primary/20 border-primary/50' : 'bg-gray-500/20 border-gray-500/50'}`}
           >
             <Text className={`font-bold tracking-widest uppercase text-xs ${isArmed ? 'text-primary' : 'text-gray-400'}`}>
@@ -121,6 +134,34 @@ export default function DashboardScreen() {
           <View className="flex-row items-center justify-center">
             <Text className={`font-bold uppercase tracking-widest ${buzzerActive ? 'text-danger' : 'text-secondary'}`}>
               {buzzerActive ? 'Object Detected' : 'Area Clear'}
+            </Text>
+          </View>
+        </GlassCard>
+
+        {/* Force Sensor Card */}
+        <GlassCard className="mb-6 p-6">
+          <View className="flex-row justify-between items-center mb-4">
+            <View className="flex-row items-center">
+              <View className="w-10 h-10 rounded-full bg-white/10 items-center justify-center mr-3">
+                <FontAwesome5 name="weight" size={16} color="white" />
+              </View>
+              <Text className="text-white font-bold text-lg">Force Sensor</Text>
+            </View>
+            <Text className="text-white text-3xl font-mono">
+              {weight !== null ? `${weight.toFixed(2)} kg` : '--'}
+            </Text>
+          </View>
+
+          <View className="w-full h-4 bg-black/40 rounded-full overflow-hidden border border-white/5 mb-4">
+            <View 
+              className={`h-full ${(weight || 0) >= 10 ? 'bg-danger' : 'bg-secondary'}`} 
+              style={{ width: `${Math.min((weight || 0) / 20 * 100, 100)}%` }} 
+            />
+          </View>
+
+          <View className="flex-row items-center justify-center">
+            <Text className={`font-bold uppercase tracking-widest ${(weight || 0) >= 10 ? 'text-danger' : 'text-secondary'}`}>
+              {(weight || 0) >= 10 ? 'Force Detected' : 'Normal'}
             </Text>
           </View>
         </GlassCard>

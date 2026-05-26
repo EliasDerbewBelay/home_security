@@ -3,6 +3,7 @@ import { SensorEvent } from '@/types';
 
 interface SensorState {
   distance: number | null       // Ultrasonic cm value
+  weight: number | null         // FSR weight kg value
   buzzerActive: boolean         // true when buzzer is ON
   triggered: boolean            // true when object detected
   lastUpdated: string | null    // ISO timestamp
@@ -12,6 +13,7 @@ interface SensorState {
 
 export const useSensorStore = create<SensorState>((set) => ({
   distance: null,
+  weight: null,
   buzzerActive: false,
   triggered: false,
   lastUpdated: null,

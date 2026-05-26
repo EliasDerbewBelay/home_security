@@ -18,20 +18,21 @@ export const useHardwarePolling = () => {
 
   const poll = async () => {
     // Read the current interval directly from the Zustand store
-    const { pollInterval } = useSettingsStore.getState()
+    const { pollInterval, apiUrl } = useSettingsStore.getState()
     
     try {
-      const reading = await hardwareService.fetchReading()
+      const currentIsArmed = useDeviceStore.getState().isArmed;
+      const reading = await hardwareService.fetchReading(apiUrl, currentIsArmed)
       failureCountRef.current = 0
 
       const currentIsActive = useEmergencyStore.getState().isActive;
-      const currentIsArmed = useDeviceStore.getState().isArmed;
 
       const effectiveBuzzerActive = currentIsArmed && reading.buzzerActive;
 
       // Update sensor store
       updateSensor({
         distance: reading.distance,
+        weight: reading.weight,
         buzzerActive: effectiveBuzzerActive,
         triggered: effectiveBuzzerActive,
         lastUpdated: reading.timestamp,
@@ -42,10 +43,12 @@ export const useHardwarePolling = () => {
 
       // Trigger emergency if buzzer is ON and no active emergency
       if (effectiveBuzzerActive && !currentIsActive) {
+        // Determine the source of the emergency
+        const sourceSensor = reading.weight >= 10 ? 'force' : 'ultrasonic';
         triggerEmergency({
-          source: 'ultrasonic',
-          value: reading.distance,
-          severity: reading.distance < 30 ? 'high' : 'medium',
+          source: sourceSensor,
+          value: sourceSensor === 'force' ? reading.weight : reading.distance,
+          severity: (reading.distance > 0 && reading.distance < 30) || reading.weight >= 15 ? 'high' : 'medium',
         })
         
         // Log to Firestore
@@ -53,10 +56,11 @@ export const useHardwarePolling = () => {
           const user = auth.currentUser;
           const docRef = await addDoc(collection(db, 'alerts'), {
             userId: user?.uid || 'unknown',
-            sensorType: 'ultrasonic',
+            sensorType: sourceSensor,
             distance: reading.distance,
+            weight: reading.weight,
             buzzerState: 'ON',
-            severity: reading.distance < 30 ? 'high' : 'medium',
+            severity: (reading.distance > 0 && reading.distance < 30) || reading.weight >= 15 ? 'high' : 'medium',
             resolved: false,
             createdAt: Timestamp.now(),
           });
@@ -82,12 +86,13 @@ export const useHardwarePolling = () => {
         }
       }
 
-    } catch {
+    } catch (err) {
+      console.error("Hardware polling failed:", err);
       // Device is offline or unreachable
       failureCountRef.current += 1
       if (failureCountRef.current >= 3) {
         setDeviceStatus({ connected: false })
-        updateSensor({ distance: null, buzzerActive: false, triggered: false })
+        updateSensor({ distance: null, weight: null, buzzerActive: false, triggered: false })
         const currentIsActive = useEmergencyStore.getState().isActive;
         if (currentIsActive) {
           resolveEmergency()

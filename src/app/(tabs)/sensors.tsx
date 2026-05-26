@@ -8,7 +8,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { FontAwesome5 } from '@expo/vector-icons';
 
 export default function SensorsScreen() {
-  const { distance } = useSensorStore();
+  const { distance, weight } = useSensorStore();
   const { connected } = useDeviceStore();
   const { apiUrl } = useSettingsStore();
 
@@ -28,6 +28,14 @@ export default function SensorsScreen() {
           value={`${((distance ?? 0) / 100).toFixed(1)}m`}
           icon="broadcast-tower"
           progress={Math.min((distance ?? 0) / 400, 1)}
+        />
+
+        <SensorRow 
+          name="Floor Mat" 
+          status="Force Sensor" 
+          value={`${(weight ?? 0).toFixed(2)}kg`}
+          icon="weight"
+          progress={Math.min((weight ?? 0) / 20, 1)}
         />
 
 
